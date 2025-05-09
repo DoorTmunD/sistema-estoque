@@ -2,13 +2,12 @@ databases:
   - name: controle-estoque-db
     databaseName: controle_estoque
     user: controle_user
-    plan: free        # PostgreSQL gratuito
+    plan: free          # PostgreSQL gratuito
 
 services:
   - type: web
     name: controle-estoque
-    runtime: php      # runtime correto
-    version: 8.2      # versão explícita
+    runtime: php        # <<< mantém
     plan: free
 
     buildCommand: |
@@ -23,7 +22,7 @@ services:
     envVars:
       - key: APP_ENV
         value: production
-      - key: DATABASE_URL
+      - key: DATABASE_URL          # ligação automática com o DB acima
         fromDatabase:
           name: controle-estoque-db
           property: connectionString

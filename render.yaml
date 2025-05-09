@@ -1,14 +1,21 @@
+databases:
+  - name: controle-estoque-db
+    databaseName: controle_estoque
+    user: controle_user
+    plan: free        # PostgreSQL gratuito
+
 services:
   - type: web
     name: controle-estoque
-    runtime: php              # ✅ era env: php
+    runtime: php      # runtime correto
+    version: 8.2      # versão explícita
     plan: free
 
-    buildCommand: >
-      composer install --no-dev --optimize-autoloader &&
-      php artisan key:generate &&
-      php artisan migrate --force &&
-      npm ci &&
+    buildCommand: |
+      composer install --no-dev --optimize-autoloader
+      php artisan key:generate
+      php artisan migrate --force
+      npm ci
       npm run build
 
     startCommand: php artisan serve --host 0.0.0.0 --port $PORT
@@ -16,7 +23,7 @@ services:
     envVars:
       - key: APP_ENV
         value: production
-      - key: DATABASE_URL          # ✅ chave obrigatória
+      - key: DATABASE_URL
         fromDatabase:
           name: controle-estoque-db
           property: connectionString

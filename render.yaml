@@ -1,18 +1,22 @@
 services:
   - type: web
     name: controle-estoque
-    env: php
-    buildCommand: |
-      composer install --no-dev --optimize-autoloader
-      php artisan key:generate
-      php artisan migrate --force
-      npm ci
-      npm run build
-    startCommand: php artisan serve --host 0.0.0.0 --port $PORT
+    runtime: php              # ✅ era env: php
     plan: free
+
+    buildCommand: >
+      composer install --no-dev --optimize-autoloader &&
+      php artisan key:generate &&
+      php artisan migrate --force &&
+      npm ci &&
+      npm run build
+
+    startCommand: php artisan serve --host 0.0.0.0 --port $PORT
+
     envVars:
       - key: APP_ENV
         value: production
-      - fromDatabase:
+      - key: DATABASE_URL          # ✅ chave obrigatória
+        fromDatabase:
           name: controle-estoque-db
           property: connectionString

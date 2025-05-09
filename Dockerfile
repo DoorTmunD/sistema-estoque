@@ -5,10 +5,11 @@ WORKDIR /app
 COPY . .
 
 # Instala dependências e prepara o Laravel
-RUN composer install --no-dev --optimize-autoloader \
-    && npm ci \
-    && npm run build \
-    && php artisan key:generate \
-    && php artisan migrate --force
+RUN apk add --no-cache nodejs npm && \
+    composer install --no-dev --optimize-autoloader && \
+    npm ci && \
+    npm run build && \
+    php artisan key:generate && \
+    php artisan migrate --force
 
 EXPOSE 8080

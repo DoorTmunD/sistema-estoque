@@ -1,5 +1,8 @@
 FROM webdevops/php-nginx:8.2
 
+# Aponta o Nginx/PHP-FPM para a pasta public do Laravel
+ENV WEB_DOCUMENT_ROOT=/app/public
+
 WORKDIR /app
 COPY . .
 
@@ -14,11 +17,14 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progre
 # 3) Assets front-end
 RUN npm install && npm run build
 
-# 4) Copia entrypoint e dá permissão
+# 4) Ajusta permissões para storage e cache
+RUN chown -R application:application storage bootstrap/cache
+
+# 5) Copia entrypoint e dá permissão
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-# 5) Comando padrão
+# 6) Comando padrão
 CMD ["docker-entrypoint.sh"]
 
 EXPOSE 8080

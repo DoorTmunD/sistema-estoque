@@ -14,5 +14,9 @@ fi
 # Migrations
 php artisan migrate --force
 
-# Inicia PHP-FPM + Nginx
-exec /usr/bin/supervisord -n -c /opt/docker/etc/supervisord.conf
+# --- inicia serviços ---
+if [ -f /opt/docker/etc/supervisord.conf ]; then
+    exec /usr/bin/supervisord -n -c /opt/docker/etc/supervisord.conf
+else
+    exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+fi

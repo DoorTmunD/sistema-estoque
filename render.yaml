@@ -2,7 +2,7 @@ databases:
   - name: controle-estoque-db
     databaseName: controle_estoque
     user: controle_user
-    plan: free          # PostgreSQL gratuito
+    plan: free        # PostgreSQL gratuito
 
 services:
   - type: web
@@ -14,7 +14,31 @@ services:
     envVars:
       - key: APP_ENV
         value: production
+
+      # Variável completa, caso queira usar conexão via string
       - key: DATABASE_URL
         fromDatabase:
           name: controle-estoque-db
           property: connectionString
+
+      # Mapeamento individual — evita fallback para 127.0.0.1
+      - key: DB_HOST
+        fromDatabase:
+          name: controle-estoque-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: controle-estoque-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: controle-estoque-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: controle-estoque-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: controle-estoque-db
+          property: password

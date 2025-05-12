@@ -13,6 +13,7 @@ if [[ -z "$APP_KEY" || "$APP_KEY" == base64:* ]]; then
     php artisan key:generate --force
 fi
 php artisan migrate --force
+php artisan db:seed --force
 
 # --- inicia serviços ---
 exec /usr/bin/supervisord -n

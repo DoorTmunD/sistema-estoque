@@ -6,12 +6,15 @@ if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
-# força conexão PostgreSQL
+# força conexão PostgreSQL (sempre)
 sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
-sed -i '/^DB_HOST=/d;/^DB_PORT=/d;/^DB_DATABASE=/d;/^DB_USERNAME=/d;/^DB_PASSWORD=/d' .env
 
-# se estiver dentro do Render, garante APP_URL em HTTPS
+# se estivermos no Render, remove host/porta/banco/usuário/senha
+# para usar as env vars injetadas pelo Render
 if [[ "$RENDER" == "true" ]]; then
+    sed -i '/^DB_HOST=/d;/^DB_PORT=/d;/^DB_DATABASE=/d;/^DB_USERNAME=/d;/^DB_PASSWORD=/d' .env
+
+    # garante APP_URL em HTTPS no Render
     sed -i "s#^APP_URL=.*#APP_URL=https://$RENDER_EXTERNAL_HOSTNAME#" .env
 fi
 

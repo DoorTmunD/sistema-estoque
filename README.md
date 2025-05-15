@@ -1,61 +1,94 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Sistema de Controle de Estoque
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Este repositório contém um **sistema de controle de estoque** interno desenvolvido em Laravel + Livewire.
 
-## About Laravel
+## Índice
+- [Visão Geral](#visão-geral)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação](#instalação)
+- [Configuração](#configuração)
+- [Uso](#uso)
+- [Deploy no Render.com](#deploy-no-rendercom)
+- [Fluxo de Rotas](#fluxo-de-rotas)
+- [Contribuição](#contribuição)
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Visão Geral
+Sistema de controle de produtos de uso corporativo (foco em informática), com autenticação por níveis:
+- **super-admin**: gerencia usuários, produtos, categorias e fornecedores;
+- **adm**: gerencia produtos, categorias e fornecedores;
+- **common**: apenas visualização.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Pré-requisitos
+- PHP >= 8.1
+- Composer
+- Node.js >= 16
+- NPM
+- Docker (opcional)
+- PostgreSQL (local ou remoto)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Instalação
+```bash
+# Clonar o repositório
+git clone https://github.com/DoorTmunD/sistema-estoque.git
+cd sistema-estoque
 
-## Learning Laravel
+# Backend
+composer install
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+# Frontend
+npm install && npm run build
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Rodando com Docker
+```bash
+docker-compose up -d --build
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Configuração
+Copie o `.env.example` para `.env` e ajuste:
+```
+APP_URL=
+DB_CONNECTION=pgsql
+DB_HOST=
+DB_PORT=
+DB_DATABASE=
+DB_USERNAME=
+DB_PASSWORD=
+```
+Gere chave da aplicação:
+```bash
+php artisan key:generate
+```
 
-## Laravel Sponsors
+## Uso
+```bash
+# Migrar banco e seed (somente se necessário)
+php artisan migrate --seed
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Servidor local
+php artisan serve
+npm run dev
+```
 
-### Premium Partners
+## Deploy no Render.com
+1. Crie um serviço Web no Render, apontando para a branch `main`.
+2. Adicione variável `DATABASE_URL` com a URL do PostgreSQL gerado automaticamente.
+3. Ajuste o comando de build:
+   - **Build Command**: `composer install && npm ci && npm run build`
+   - **Start Command**: `php artisan migrate --force && php artisan serve --port $PORT`
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development/)**
-- **[Active Logic](https://activelogic.com)**
+## Fluxo de Rotas
+- `/` → se não autenticado redireciona para `/login`, senão para `/dashboard`.
+- Grupos protegidos por middleware `auth` e Gates (`manage-products`, `manage-users`).
 
-## Contributing
+## Contribuição
+1. Faça um fork
+2. Crie uma branch: `feature/nome-da-feature`
+3. Commit suas alterações
+4. Abra um Pull Request
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+# Rodar linting e testes antes de commitar
+composer lint
+phpunit
+``` 

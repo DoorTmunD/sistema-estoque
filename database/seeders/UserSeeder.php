@@ -2,21 +2,22 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name'     => 'Super Admin',
-                'password' => Hash::make('password'),
-                'role_id'  => 1,             // super-admin
-            ]
-        );
+        // Common inicial
+        User::factory()->create([
+            'name' => 'User Common',
+            'email' => 'common@exemplo.com',
+            'password' => bcrypt('senha123'),
+            'nivel' => 'common',
+        ]);
+
+        // Outros usuários
+        User::factory()->count(5)->create();
     }
 }

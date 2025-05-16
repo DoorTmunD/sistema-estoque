@@ -1,23 +1,25 @@
 #!/usr/bin/env bash
 set -e
 
-# --- prepara .env ----------------------------------------------------------
+# --------------------------------------------------------------------------
+# 1. Prepara .env
+# --------------------------------------------------------------------------
 if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
-# força conexão PostgreSQL
+# força PostgreSQL
 sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
 
-# se estivermos no Render, remove host/porta/banco/usuário/senha
+# se estiver no Render, limpa host/porta/credenciais (virão de envVars)
 if [[ "$RENDER" == "true" ]]; then
     sed -i '/^DB_HOST=/d;/^DB_PORT=/d;/^DB_DATABASE=/d;/^DB_USERNAME=/d;/^DB_PASSWORD=/d' .env
-
-    # sobescreve APP_URL para o hostname público
     sed -i "s~^APP_URL=.*~APP_URL=https://$RENDER_EXTERNAL_HOSTNAME~" .env
 fi
 
-# --- gera chave, migra, seed ----------------------------------------------
+# --------------------------------------------------------------------------
+# 2. Gera chave, migra e seed
+# --------------------------------------------------------------------------
 if [[ -z "$APP_KEY" || "$APP_KEY" == base64:* ]]; then
     php artisan key:generate --force
 fi
@@ -25,11 +27,13 @@ fi
 php artisan migrate --force
 php artisan db:seed --force
 
-# --- limpa caches ----------------------------------------------------------
-php artisan config:clear
-php artisan route:clear
-php artisan view:clear
+# --------------------------------------------------------------------------
+# 3. Limpa e recompila caches
+# --------------------------------------------------------------------------
 php artisan optimize:clear
+php artisan config:cache route:cache view:cache    # warm-up
 
-# --- inicia serviços -------------------------------------------------------
+# --------------------------------------------------------------------------
+# 4. Inicia serviços supervisord (nginx + php-fpm)
+# --------------------------------------------------------------------------
 exec /usr/bin/supervisord -n

@@ -2,26 +2,35 @@ databases:
   - name: controle-estoque-db
     databaseName: controle_estoque
     user: controle_user
-    plan: free        # PostgreSQL gratuito
+    plan: free
 
 services:
   - type: web
     name: controle-estoque
-    runtime: docker
+    runtime: docker          # usa o Dockerfile do repositório
     plan: free
-    dockerfilePath: ./Dockerfile   # Render usará este Dockerfile
+    dockerfilePath: ./Dockerfile
 
     envVars:
+      # Laravel / URL
       - key: APP_ENV
         value: production
+      - key: APP_URL
+        value: https://controle-estoque-te2m.onrender.com
+      - key: ASSET_URL
+        value: https://controle-estoque-te2m.onrender.com
+      - key: APP_DEBUG
+        value: "false"
 
-      # Variável completa, caso queira usar conexão via string
+      # Render injeta essa flag automaticamente no container
+      - key: RENDER
+        value: "true"
+
+      # Conexão PostgreSQL (mapa 1-a-1, sem expor senha no código)
       - key: DATABASE_URL
         fromDatabase:
           name: controle-estoque-db
           property: connectionString
-
-      # Mapeamento individual — evita fallback para 127.0.0.1
       - key: DB_HOST
         fromDatabase:
           name: controle-estoque-db

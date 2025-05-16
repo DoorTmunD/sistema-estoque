@@ -1,44 +1,51 @@
-# 1) STAGE NODE: instalar deps JS e compilar assets
-FROM node:18-alpine AS node-build
+############################
+# 1) STAGE: BUILD ASSETS   #
+############################
+FROM node:20-alpine AS assets
 
 WORKDIR /app
-
-# Cache de deps JS
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --no-progress
 
-# Copia e builda o Vite
-COPY . .
-RUN npm run build
+COPY vite.config.js .
+COPY resources resources
+RUN npm run build          # gera public/build/*
 
+############################
+# 2) STAGE: COMPOSER       #
+############################
+FROM composer:2 AS vendor
 
-# 2) STAGE PHP + NGINX
-FROM webdevops/php-nginx:8.2
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
 
-# Documento raiz do Nginx/PHP
-ENV WEB_DOCUMENT_ROOT=/app/public
+############################
+# 3) STAGE: RUNTIME        #
+############################
+FROM webdevops/php-nginx:8.2-alpine
+
+ENV WEB_DOCUMENT_ROOT=/app/public \
+    APP_ENV=production \
+    APP_DEBUG=false
 
 WORKDIR /app
 
-# 2.1) Copia todo o código do Laravel (antes de instalar o Composer)
+# código-fonte
 COPY . .
 
-# 2.2) Garante que as pastas de cache existam e sejam próprias
-RUN mkdir -p storage bootstrap/cache \
-    && chown -R application:application storage bootstrap/cache
+# vendor + assets dos stages anteriores
+COPY --from=vendor /app/vendor ./vendor
+COPY --from=assets /app/public/build ./public/build
 
-# 2.3) Instala deps PHP + roda scripts (package:discover, etc)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
-
-# 2.4) Copia somente os assets compilados pelo stage node
-COPY --from=node-build /app/public/build public/build
-
-# 2.5) Ajusta permissões finais
+# permissões para nginx/php-fpm (usuário "application")
 RUN chown -R application:application storage bootstrap/cache public/build
 
-# 2.6) Entrypoint
+# entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
-EXPOSE 8080
+
+# porta que o Render mapeia
+EXPOSE 80                 
 CMD ["docker-entrypoint.sh"]

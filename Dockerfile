@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 # Instala deps JS
 RUN npm ci
 
-# Copia o restante do código e executa o build do Vite
+# Copia todo o restante do código e executa o build do Vite
 COPY . .
 RUN npm run build
 
@@ -17,7 +17,7 @@ RUN npm run build
 # 2) STAGE PHP + NGINX
 FROM webdevops/php-nginx:8.2
 
-# Define document root do Nginx/PHP
+# Define a pasta pública do Nginx/PHP
 ENV WEB_DOCUMENT_ROOT=/app/public
 
 WORKDIR /app
@@ -26,7 +26,7 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
 
-# 2.2) Copia o código do Laravel (não inclui node_modules nem public/build)
+# 2.2) Copia o restante do código do Laravel
 COPY . .
 
 # 2.3) Copia os assets gerados pelo Vite

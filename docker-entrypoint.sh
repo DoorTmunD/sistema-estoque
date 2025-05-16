@@ -27,6 +27,9 @@ fi
 php artisan migrate --force
 php artisan db:seed --force
 
+# >>> executa agora, com storage/config completos
+php artisan package:discover --ansi
+
 # --------------------------------------------------------------------------
 # 3. Limpa e recompila caches
 # --------------------------------------------------------------------------

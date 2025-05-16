@@ -13,24 +13,16 @@ RUN npm run build                 # → public/build/*
 
 
 #######################################################################
-# 2) STAGE: COMPOSER (instala vendor)                                 #
+# 2) STAGE: COMPOSER (instala vendor, SEM scripts)                    #
 #######################################################################
 FROM composer:2 AS vendor
 
 WORKDIR /app
 
-# 2.1  Arquivos indispensáveis para package:discover
-COPY composer.json composer.lock artisan ./
-COPY bootstrap ./bootstrap
-COPY config     ./config             
-
-# 2.2  Cria diretórios de cache/log antes do composer
-RUN mkdir -p storage/framework/{cache/data,sessions,views} \
-           storage/logs bootstrap/cache
-
-# 2.3  Instala dependências PHP
-RUN composer install --no-dev --optimize-autoloader \
-      --no-interaction --no-progress
+# Arquivos mínimos para resolver dependências
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --no-progress \
+      --prefer-dist --optimize-autoloader --no-scripts
 
 
 #######################################################################
@@ -44,16 +36,16 @@ ENV WEB_DOCUMENT_ROOT=/app/public \
 
 WORKDIR /app
 
-# 3.1  Código-fonte completo
+# 3.1  Copia código-fonte completo
 COPY . .
 
-# 3.2  Vendor + assets dos stages anteriores
+# 3.2  Vendor + assets vindos dos stages anteriores
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=assets /app/public/build ./public/build
 
-# 3.3  Permissões corretas
-RUN chown -R application:application \
-        storage bootstrap/cache public/build
+# 3.3  Permissões para php-fpm/nginx (usuário "application")
+RUN mkdir -p storage/framework/{cache/data,sessions,views} storage/logs bootstrap/cache \
+ && chown -R application:application storage bootstrap/cache public/build
 
 # 3.4  Entrypoint
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

@@ -13,22 +13,23 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-   
-
-    <!-- Vite (CSS & JS) -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Manual CSS & JS assets (fallback relative paths) -->
+    <link rel="stylesheet" href="{{ asset('build/assets/app.css') }}">
+    <script src="{{ asset('build/assets/app.js') }}" defer></script>
 
     <!-- Page Specific Styles -->
     @stack('styles')
-     <!-- Livewire Styles -->
+
+    <!-- Livewire Styles -->
     @livewireStyles
 </head>
 <body class="font-sans antialiased bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
     @if(config('app.demo'))
-  <div class="fixed top-4 right-4 bg-yellow-400 text-black px-3 py-1 rounded-full font-semibold z-50">
-    DEMO
-  </div>
-@endif
+      <div class="fixed top-4 right-4 bg-yellow-400 text-black px-3 py-1 rounded-full font-semibold z-50">
+        DEMO
+      </div>
+    @endif
+
     <div class="min-h-screen">
         {{-- Navegação --}}
         <livewire:layout.navigation />
@@ -57,14 +58,14 @@
 
         {{-- Conteúdo da página --}}
         <main 
-    x-data="{ show: false }" 
-    x-init="show = true" 
-    x-show="show"
-    x-transition:enter="transition ease-out duration-300"
-    x-transition:enter-start="opacity-0 translate-y-4"
-    x-transition:enter-end="opacity-100 translate-y-0"
-    class="py-6"
->
+            x-data="{ show: false }" 
+            x-init="show = true" 
+            x-show="show"
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 translate-y-4"
+            x-transition:enter-end="opacity-100 translate-y-0"
+            class="py-6"
+        >
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 @yield('content')
             </div>

@@ -34,7 +34,8 @@ php artisan package:discover --ansi
 # 3. Limpa e recompila caches
 # --------------------------------------------------------------------------
 php artisan optimize:clear
-php artisan config:cache route:cache view:cache    # warm-up
+php artisan optimize 
+php artisan view:cache    # warm-up
 
 # --------------------------------------------------------------------------
 # 4. Inicia serviços supervisord (nginx + php-fpm)

@@ -8,13 +8,13 @@ if [ ! -f .env ]; then
     cp .env.example .env
 fi
 
-# força PostgreSQL
 sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
 
-# se estiver no Render, limpa host/porta/credenciais (virão de envVars)
+# Se estiver no Render, substitui host público e zera credenciais locais
 if [[ "$RENDER" == "true" ]]; then
     sed -i '/^DB_HOST=/d;/^DB_PORT=/d;/^DB_DATABASE=/d;/^DB_USERNAME=/d;/^DB_PASSWORD=/d' .env
     sed -i "s~^APP_URL=.*~APP_URL=https://$RENDER_EXTERNAL_HOSTNAME~" .env
+    sed -i "s~^ASSET_URL=.*~ASSET_URL=https://$RENDER_EXTERNAL_HOSTNAME~" .env   # ← NOVO
 fi
 
 # --------------------------------------------------------------------------
@@ -27,17 +27,17 @@ fi
 php artisan migrate --force
 php artisan db:seed --force
 
-# >>> executa agora, com storage/config completos
+# Descobre pacotes agora que storage/config existem
 php artisan package:discover --ansi
 
 # --------------------------------------------------------------------------
 # 3. Limpa e recompila caches
 # --------------------------------------------------------------------------
-php artisan optimize:clear
-php artisan optimize 
-php artisan view:cache    # warm-up
+php artisan optimize:clear      # limpa config/route/view
+php artisan optimize            # recompila config + route cache
+php artisan view:cache          # pré-compila blades
 
 # --------------------------------------------------------------------------
-# 4. Inicia serviços supervisord (nginx + php-fpm)
+# 4. Inicia Nginx + PHP-FPM via supervisord
 # --------------------------------------------------------------------------
 exec /usr/bin/supervisord -n

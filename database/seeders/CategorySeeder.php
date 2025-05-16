@@ -9,6 +9,18 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        Category::factory()->count(10)->create();
+        $samples = [
+            ['name' => 'Eletrônicos',    'description' => 'Produtos eletrônicos em geral.'],
+            ['name' => 'Informática',    'description' => 'Hardware, software e periféricos.'],
+            ['name' => 'Escritório',     'description' => 'Materiais de escritório.'],
+            // … até 10 itens fixos …
+        ];
+
+        foreach ($samples as $data) {
+            Category::updateOrCreate(
+                ['name' => $data['name']],
+                ['description' => $data['description']]
+            );
+        }
     }
 }

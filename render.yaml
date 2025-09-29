@@ -7,29 +7,27 @@ databases:
 services:
   - type: web
     name: controle-estoque
-    env: docker               # <- sintaxe oficial do Blueprint
+    env: docker
     plan: free
     dockerfilePath: ./Dockerfile
     autoDeploy: true
 
     envVars:
-      # Laravel / URL (preenche com a URL pública do serviço)
+      # Ambiente Laravel
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: "false"
-      - key: APP_URL
-        fromService:
-          name: controle-estoque
-          type: web
-          property: url
-      - key: ASSET_URL
-        fromService:
-          name: controle-estoque
-          type: web
-          property: url
+      - key: LOG_LEVEL
+        value: warning
 
-      # Sinalização: estamos em Render (opcional)
+      # Sessão e filas
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+
+      # Flag que sinaliza Render
       - key: RENDER
         value: "true"
 

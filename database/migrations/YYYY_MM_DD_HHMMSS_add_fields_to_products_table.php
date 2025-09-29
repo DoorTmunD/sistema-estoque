@@ -7,13 +7,17 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void {
         Schema::table('products', function (Blueprint $table) {
-            // Código/prefixo (para formar o serial interno) — opcional, único
-            $table->string('code', 24)->nullable()->unique()->after('name');
+            // code (único, opcional) — só cria se não existir
+            if (!Schema::hasColumn('products', 'code')) {
+                $table->string('code', 24)->nullable()->unique()->after('name');
+            }
 
-            // Flag de consumível (toner, fita, etc.)
-            $table->boolean('is_consumable')->default(false)->after('supplier_id');
+            // is_consumable — só cria se não existir
+            if (!Schema::hasColumn('products', 'is_consumable')) {
+                $table->boolean('is_consumable')->default(false)->after('supplier_id');
+            }
 
-            // (Opcional) preço de venda — se quiser usar o price_venda do form
+            // sale_price — já protegido
             if (!Schema::hasColumn('products', 'sale_price')) {
                 $table->decimal('sale_price', 12, 2)->nullable()->after('unit_price');
             }
@@ -29,7 +33,9 @@ return new class extends Migration {
                 $table->dropColumn('is_consumable');
             }
             if (Schema::hasColumn('products', 'code')) {
-                $table->dropUnique(['code']);
+                // Em alguns drivers o índice único se chama products_code_unique
+                try { $table->dropUnique(['code']); } catch (\Throwable $e) {}
+                try { $table->dropUnique('products_code_unique'); } catch (\Throwable $e) {}
                 $table->dropColumn('code');
             }
         });

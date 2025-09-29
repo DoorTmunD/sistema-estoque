@@ -7,26 +7,35 @@ databases:
 services:
   - type: web
     name: controle-estoque
-    runtime: docker          # usa o Dockerfile do repositório
+    env: docker               # <- sintaxe oficial do Blueprint
     plan: free
     dockerfilePath: ./Dockerfile
+    autoDeploy: true
 
     envVars:
-      # Laravel / URL
+      # Laravel / URL (preenche com a URL pública do serviço)
       - key: APP_ENV
         value: production
-      - key: APP_URL
-        value: https://controle-estoque-te2m.onrender.com
-      - key: ASSET_URL
-        value: https://controle-estoque-te2m.onrender.com
       - key: APP_DEBUG
         value: "false"
+      - key: APP_URL
+        fromService:
+          name: controle-estoque
+          type: web
+          property: url
+      - key: ASSET_URL
+        fromService:
+          name: controle-estoque
+          type: web
+          property: url
 
-      # Render injeta essa flag automaticamente no container
+      # Sinalização: estamos em Render (opcional)
       - key: RENDER
         value: "true"
 
-      # Conexão PostgreSQL (mapa 1-a-1, sem expor senha no código)
+      # Banco de dados (Render injeta as credenciais)
+      - key: DB_CONNECTION
+        value: pgsql
       - key: DATABASE_URL
         fromDatabase:
           name: controle-estoque-db

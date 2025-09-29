@@ -5,39 +5,43 @@ set -e
 # 1. Prepara .env
 # --------------------------------------------------------------------------
 if [ ! -f .env ]; then
-    cp .env.example .env
+  cp .env.example .env
 fi
 
-sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env
+# Força pgsql no container de produção
+# (para desenvolvimento local, você continua com sqlite no .env local)
+sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env || true
 
-# Se estiver no Render, substitui host público e zera credenciais locais
-if [[ "$RENDER" == "true" ]]; then
-    sed -i '/^DB_HOST=/d;/^DB_PORT=/d;/^DB_DATABASE=/d;/^DB_USERNAME=/d;/^DB_PASSWORD=/d' .env
-    sed -i "s~^APP_URL=.*~APP_URL=https://$RENDER_EXTERNAL_HOSTNAME~" .env
-    sed -i "s~^ASSET_URL=.*~ASSET_URL=https://$RENDER_EXTERNAL_HOSTNAME~" .env   # ← NOVO
+# Se o Render expuser o hostname público, ajusta URLs
+if [ -n "$RENDER_EXTERNAL_HOSTNAME" ]; then
+  sed -i "s~^APP_URL=.*~APP_URL=https://$RENDER_EXTERNAL_HOSTNAME~" .env || true
+  sed -i "s~^ASSET_URL=.*~ASSET_URL=https://$RENDER_EXTERNAL_HOSTNAME~" .env || true
 fi
 
 # --------------------------------------------------------------------------
-# 2. Gera chave, migra e seed
+# 2. APP_KEY (gera somente se estiver vazio no .env)
 # --------------------------------------------------------------------------
-if [[ -z "$APP_KEY" || "$APP_KEY" == base64:* ]]; then
-    php artisan key:generate --force
+if ! grep -qE '^APP_KEY=.+$' .env || grep -qE '^APP_KEY=\s*$' .env; then
+  php artisan key:generate --force || true
 fi
 
+# --------------------------------------------------------------------------
+# 3. Migrate/Seed
+# --------------------------------------------------------------------------
 php artisan migrate --force
-php artisan db:seed --force
+php artisan db:seed --force || true
 
 # Descobre pacotes agora que storage/config existem
-php artisan package:discover --ansi
+php artisan package:discover --ansi || true
 
 # --------------------------------------------------------------------------
-# 3. Limpa e recompila caches
+# 4. Caches
 # --------------------------------------------------------------------------
-php artisan optimize:clear      # limpa config/route/view
-php artisan optimize            # recompila config + route cache
-php artisan view:cache          # pré-compila blades
+php artisan optimize:clear || true
+php artisan optimize || true
+php artisan view:cache || true
 
 # --------------------------------------------------------------------------
-# 4. Inicia Nginx + PHP-FPM via supervisord
+# 5. Inicia Nginx + PHP-FPM via supervisord
 # --------------------------------------------------------------------------
 exec /usr/bin/supervisord -n

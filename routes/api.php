@@ -5,13 +5,8 @@ use App\Http\Controllers\Api\ProductApiController;
 use App\Http\Controllers\Api\CategoryApiController;
 use App\Http\Controllers\Api\SupplierApiController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes – Fase 2
-|--------------------------------------------------------------------------
-*/
-
-Route::middleware('auth:sanctum')->group(function () {
+// Proteção só por Sanctum, checagem de permissão/nivel é nas policies/controllers
+Route::middleware(['auth:sanctum'])->group(function () {
     Route::apiResource('products',   ProductApiController::class);
     Route::apiResource('categories', CategoryApiController::class)->except(['show']);
     Route::apiResource('suppliers',  SupplierApiController::class)->except(['show']);

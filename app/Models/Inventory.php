@@ -13,9 +13,15 @@ class Inventory extends Model
 {
     use HasFactory, LogsActivity;
 
-    /**
-     * Configure os atributos que serão auditados.
-     */
+    protected $fillable = ['product_id','qnt_estoque','qnt_ideal'];
+
+    // Mantém o campo derivado no JSON/arrays
+    protected $appends = ['qnt_estoque'];
+
+    protected $casts = [
+        'qnt_ideal' => 'integer',
+    ];
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -25,30 +31,46 @@ class Inventory extends Model
             ->dontSubmitEmptyLogs();
     }
 
-    /**
-     * Atributos que podem ser preenchidos em massa.
-     *
-     * @var array<int,string>
-     */
-    protected $fillable = [
-        'product_id',
-        'qnt_estoque',
-        'qnt_ideal',
-    ];
+    public function getDescriptionForEvent(string $eventName): string
+    {
+        return "Estoque do produto ID {$this->product_id} foi {$eventName}";
+    }
 
-    /**
-     * Relacionamento: este registro de estoque pertence a um produto.
-     */
+    /* ====================== Relacionamentos ====================== */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
-    /**
-     * Movimentações de entrada/saída associadas a este estoque.
-     */
     public function movements(): HasMany
     {
         return $this->hasMany(InventoryMovement::class, 'product_id', 'product_id');
+    }
+
+    /** Itens AVAILABLE do produto (útil para eager-load de contagem). */
+    public function availableItems(): HasMany
+    {
+        return $this->hasMany(ProductItem::class, 'product_id', 'product_id')
+            ->where('status', ProductItem::STATUS_AVAILABLE);
+    }
+
+    /* ====================== Accessors ====================== */
+    /**
+     * Quantidade em estoque:
+     * - Não-consumíveis: conta itens AVAILABLE (derivado)
+     * - Consumíveis: usa snapshot (coluna qnt_estoque)
+     */
+    public function getQntEstoqueAttribute(): int
+    {
+        $this->loadMissing('product');
+
+        if ($this->product && !$this->product->is_consumable) {
+            if ($this->relationLoaded('availableItems')) {
+                return (int) $this->availableItems->count();
+            }
+            return (int) $this->availableItems()->count();
+        }
+
+        return (int) ($this->attributes['qnt_estoque'] ?? 0);
     }
 }

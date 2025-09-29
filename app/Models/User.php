@@ -5,17 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Scout\Searchable;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, LogsActivity;
+    use HasFactory, Notifiable, LogsActivity, Searchable;
 
-    /**
-     * Configurações de quais atributos serão logados.
-     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -25,44 +22,58 @@ class User extends Authenticatable
             ->dontSubmitEmptyLogs();
     }
 
-    /**
-     * Atributos que podem ser preenchidos em massa.
-     *
-     * @var array<int,string>
-     */
+    public function getDescriptionForEvent(string $eventName): string
+    {
+        return "Usuário \"{$this->name}\" foi {$eventName}";
+    }
+
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role_id',
-        'nivel',
+        'nivel', // Aqui está nosso "papel"
     ];
 
-    /**
-     * Atributos ocultos na serialização.
-     *
-     * @var array<int,string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Casts dos atributos.
-     *
-     * @var array<string,string>
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password'          => 'hashed',
     ];
 
-    /**
-     * Relacionamento: um usuário pertence a um papel.
-     */
-    public function role(): BelongsTo
+    // Se quiser um helper para checar nível do usuário:
+    public function isAdmin()
     {
-        return $this->belongsTo(Role::class);
+        return in_array($this->nivel, ['super-admin', 'adm']);
+    }
+
+    public function isOperator()
+    {
+        return $this->nivel === 'operador';
+    }
+
+    public function isCommon()
+    {
+        return $this->nivel === 'common';
+    }
+
+    // SCOUT/ALGOLIA: Campos indexados
+    public function toSearchableArray()
+    {
+        return [
+            'id'    => $this->id,
+            'name'  => $this->name,
+            'email' => $this->email,
+            'nivel' => $this->nivel,
+        ];
+    }
+
+    public function getLabelForSearch()
+    {
+        return "{$this->name}" . ($this->email ? " <{$this->email}>" : '') .
+               ($this->nivel ? " [Perfil: {$this->nivel}]" : '');
     }
 }

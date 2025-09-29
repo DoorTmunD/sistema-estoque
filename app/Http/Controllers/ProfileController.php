@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules;
 
 class ProfileController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'verified']);
+        $this->middleware(['auth']); // Mantém verified se quiser obrigar e-mail verificado
     }
 
     public function edit(Request $request)
@@ -18,17 +17,18 @@ class ProfileController extends Controller
         return view('profile.edit', ['user' => $request->user()]);
     }
 
-    public function updateProfileInformation(Request $request)
+    public function update(Request $request)
     {
         $user = $request->user();
 
         $data = $request->validate([
-            'name' => 'required|string|max:255',
+            'name'  => 'required|string|max:255',
             'email' => "required|string|email|max:255|unique:users,email,{$user->id}",
         ]);
 
         $user->fill($data);
 
+        // Se mudou o email, remove a verificação
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
             $user->sendEmailVerificationNotification();
@@ -36,7 +36,9 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return back()->with('success', 'Perfil atualizado com sucesso.');
+        return redirect()
+            ->route('profile.edit')
+            ->with('success', 'Perfil atualizado com sucesso.');
     }
 
     public function updatePassword(Request $request)
@@ -50,7 +52,9 @@ class ProfileController extends Controller
             'password' => Hash::make($request->input('password')),
         ]);
 
-        return back()->with('success', 'Senha atualizada com sucesso.');
+        return redirect()
+            ->route('profile.edit')
+            ->with('success', 'Senha atualizada com sucesso.');
     }
 
     public function destroy(Request $request)
@@ -60,9 +64,7 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
-
         auth()->logout();
-
         $user->delete();
 
         $request->session()->invalidate();

@@ -95,11 +95,28 @@ new class extends Component
                                 {{ __('Usuários') }}
                             </x-nav-link>
                         @endcan
+
+                        @can('manage-users')
+    <x-nav-link
+        :href="route('admin.dashboard')"
+        :active="request()->routeIs('admin.*')"
+        class="text-indigo-500 font-semibold hover:text-indigo-700"
+    >
+        Administração
+    </x-nav-link>
+@endcan
                     </div>
                 </div>
 
                 <!-- Dark toggle + Dropdown -->
                 <div class="flex items-center">
+                    @livewire('notification-menu')
+                    <!-- Bell Icon de Notificações -->
+    <!-- Tooltip opcional -->
+    <span class="absolute left-1/2 -bottom-6 -translate-x-1/2 px-2 py-1 bg-gray-900 text-xs text-white rounded shadow opacity-0 group-hover:opacity-100 transition">
+        Novas notificações
+    </span>
+</button>
                     <button
                         @click="
                             dark = !dark;

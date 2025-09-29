@@ -25,10 +25,16 @@
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
-                @foreach($users as $user)
+                @forelse($users as $user)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ $user->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ ucwords(str_replace('-', ' ', $user->nivel)) }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ [
+                                'super-admin' => 'Super Admin',
+                                'adm'         => 'Administrador',
+                                'common'      => 'Operador'
+                            ][$user->nivel] ?? ucwords(str_replace('-', ' ', $user->nivel)) }}
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                             <a
                                 href="{{ route('users.edit', $user) }}"
@@ -49,11 +55,21 @@
                             </form>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="3" class="text-center text-gray-400 py-8">
+                            <div class="flex flex-col items-center justify-center">
+                                <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_jyye9mjx.json"
+                                               background="transparent" speed="1" style="width: 90px; height: 90px;" loop autoplay>
+                                </lottie-player>
+                                <div class="mt-2 text-lg">Nenhum usuário encontrado.</div>
+                            </div>
+                        </td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
     </div>
-
     <div class="mt-6">
         {{ $users->links() }}
     </div>

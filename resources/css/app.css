@@ -1,3 +1,39 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 1. Importação da fonte Fraktur Bold (UnifrakturCook do Google Fonts) */
+@import url('https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap');
+
+/* 2. Font-family utilitária para Tailwind */
+@layer utilities {
+  .font-fraktur {
+    font-family: 'UnifrakturCook', serif;
+  }
+
+  /* 3. Animação shake customizada (para login, erro, etc) */
+  .animate-shake {
+    animation: shake 0.5s;
+  }
+}
+
+/* 4. Keyframes shake */
+@keyframes shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-8px); }
+  40%, 60% { transform: translateX(8px); }
+}
+
+/* 5. Efeito "glow" azul neon para logos, títulos etc */
+.logo-glow {
+  filter: drop-shadow(0 0 8px #23F6F8bb) drop-shadow(0 0 16px #6648E080);
+}
+
+/* 6. Responsividade extra (opcional, caso precise) */
+@media (max-width: 600px) {
+  .logo-glow {
+    width: 42px !important;
+    height: 42px !important;
+  }
+}

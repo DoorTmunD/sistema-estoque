@@ -3,6 +3,7 @@ import Cleave from 'cleave.js';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 
+
 window.Cleave = Cleave;
 
 function initCleaveMasks() {

@@ -12,10 +12,10 @@ class AdminUserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'admin@exemplo.com'],
             [
-                'name'     => 'Super Admin',
-                'password' => bcrypt('senha123'),
-                'role_id'  => 1,
-                'nivel'    => 'super-admin',
+                'name'              => 'Super Admin',
+                'password'          => bcrypt('senha123'),
+                'email_verified_at' => now(),
+                'nivel'             => 'super-admin', 
             ]
         );
     }

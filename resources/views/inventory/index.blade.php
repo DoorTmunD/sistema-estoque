@@ -1,172 +1,170 @@
 @extends('layouts.app')
 
 @section('header')
-    <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Estoque</h2>
+  <h2 class="text-2xl font-semibold text-gray-800 dark:text-gray-200">Estoque</h2>
 @endsection
 
 @section('content')
-<div 
-    x-data="{
-        showExit: false,
-        exit: { product_id: null, quantity: 1, responsible_id: '', notes: '' },
-        openExit(productId) {
-            this.exit = { product_id: productId, quantity: 1, responsible_id: '', notes: '' };
-            this.showExit = true;
-        },
-        closeExit() {
-            this.showExit = false;
-        }
-    }"
-    class="bg-white shadow rounded-lg p-6"
->
-    <div class="flex justify-between items-center mb-4">
-        <div class="flex justify-end mb-4">
-        <a href="{{ route('inventory.export') }}"
-           class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
-            Exportar CSV
-        </a>
-    </div>
-        <h3 class="text-lg font-medium text-gray-700 dark:text-gray-300">Lista de Estoque</h3>
-        <a
-            href="{{ route('inventory.create') }}"
-            class="px-4 py-2 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 active:bg-green-800 transition"
-        >
-            + Novo Registro de Estoque
-        </a>
-    </div>
+<div class="max-w-6xl mx-auto bg-white/90 dark:bg-gray-900/90 border border-gray-100 dark:border-gray-800 rounded-2xl shadow p-6">
 
-    {{-- filtro mantido aqui... --}}
+  <div class="flex items-center justify-between mb-6">
+    <a href="{{ route('inventory.export') }}"
+       class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">
+      Exportar CSV
+    </a>
 
+    <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Lista de Estoque</h3>
+
+    <a href="{{ route('inventory.create') }}"
+       class="px-4 py-2 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm font-semibold">
+      + Novo Registro de Estoque
+    </a>
+  </div>
+
+  @if(session('success'))
+    <div class="mb-4 text-sm px-3 py-2 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200">{{ session('success') }}</div>
+  @endif
+  @if(session('error'))
+    <div class="mb-4 text-sm px-3 py-2 rounded bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200">{{ session('error') }}</div>
+  @endif
+
+  @if($inventories->count())
     <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Produto</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Categoria</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Fornecedor</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Qtd Estoque</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Qtd Ideal</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Ações</th>
-                </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200">
-                @foreach($inventories as $item)
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 odd:bg-white even:bg-gray-50 dark:even:bg-gray-700">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{{ $item->product->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{{ $item->product->category->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{{ $item->product->supplier->name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{{ $item->qnt_estoque }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{{ $item->qnt_ideal }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                            {{-- Editar estoque existente --}}
-                            <a
-                                href="{{ route('inventory.edit', $item) }}"
-                                class="text-indigo-600 dark:text-indigo-400 hover:text-indigo-900 dark:hover:text-indigo-200"
-                            >
-                                Editar
-                            </a>
-                            {{-- Excluir --}}
-                            <form action="{{ route('inventory.destroy', $item) }}" method="POST" class="inline">
-                                @csrf
-                                @method('DELETE')
-                                <button
-                                    type="submit"
-                                    class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
-                                    onclick="return confirm('Tem certeza que deseja excluir este registro de estoque?')"
-                                >
-                                    Excluir
-                                </button>
-                            </form>
-                            {{-- Dar Baixa (saída) --}}
-                            <button
-                                type="button"
-                                @click="openExit({{ $item->product->id }})"
-                                class="text-yellow-600 dark:text-yellow-400 hover:text-yellow-800 dark:hover:text-yellow-200"
-                            >
-                                Dar Baixa
-                            </button>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+      <table class="min-w-full text-sm divide-y divide-gray-200 dark:divide-gray-800">
+        <thead class="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+          <tr>
+            <th class="px-4 py-3 w-10"></th>
+            <th class="px-4 py-3 text-left">Produto</th>
+            <th class="px-4 py-3 text-left hidden md:table-cell">Categoria</th>
+            <th class="px-4 py-3 text-left hidden md:table-cell">Fornecedor</th>
+            <th class="px-4 py-3 text-right">Disponíveis</th>
+            <th class="px-4 py-3 text-right hidden sm:table-cell">Emprestados</th>
+            <th class="px-4 py-3 text-right hidden sm:table-cell">Consumidos</th>
+            <th class="px-4 py-3 text-right">Ideal</th>
+            <th class="px-4 py-3 text-center">Ações</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800 bg-white dark:bg-gray-900">
+          @foreach($inventories as $inv)
+            @php
+              $p = $inv->product;
+              // Usa accessors do model (com fallback para snapshot dos consumíveis)
+              $available = $p?->available_count ?? (int) $inv->qnt_estoque;
+              $loaned    = $p?->loaned_count ?? 0;
+              $consumed  = $p?->consumed_count ?? 0;
+            @endphp
+
+            {{-- Linha principal --}}
+            <tr class="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+              <td class="px-4 py-3">
+                <button
+                  class="toggle-row inline-flex items-center justify-center w-7 h-7 rounded hover:bg-gray-200/60 dark:hover:bg-gray-700/60 text-gray-600 dark:text-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                  aria-label="Expandir itens do produto"
+                  aria-expanded="false"
+                  aria-controls="row-items-{{ $p->id }}"
+                  data-product-id="{{ $p->id }}"
+                  data-open="0">
+                  {{-- setinha via SVG (gira quando aberto) --}}
+                  <svg class="w-4 h-4 transition-transform duration-150" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7 5l6 5-6 5V5z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </td>
+              <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-100">{{ $p->name }}</td>
+              <td class="px-4 py-3 hidden md:table-cell">{{ $p->category->name ?? '—' }}</td>
+              <td class="px-4 py-3 hidden md:table-cell">{{ $p->supplier->name ?? '—' }}</td>
+              <td class="px-4 py-3 text-right">{{ $available }}</td>
+              <td class="px-4 py-3 text-right hidden sm:table-cell">{{ $loaned }}</td>
+              <td class="px-4 py-3 text-right hidden sm:table-cell">{{ $consumed }}</td>
+              <td class="px-4 py-3 text-right">{{ $inv->qnt_ideal }}</td>
+              <td class="px-4 py-3 text-center">
+                <a href="{{ route('inventory.edit', $inv) }}"
+                   class="inline-flex items-center px-2 py-1 rounded bg-yellow-500 hover:bg-yellow-600 text-white">Editar</a>
+                <form action="{{ route('inventory.destroy', $inv) }}" method="POST" class="inline"
+                      onsubmit="return confirm('Excluir este registro de estoque?')">
+                  @csrf @method('DELETE')
+                  <button class="inline-flex items-center px-2 py-1 rounded bg-red-600 hover:bg-red-700 text-white">Excluir</button>
+                </form>
+              </td>
+            </tr>
+
+            {{-- Linha expandida (itens + ações) --}}
+            <tr class="hidden" id="row-items-{{ $p->id }}">
+              <td colspan="9" class="px-0 py-0">
+                <div class="px-6 py-4 bg-gray-50 dark:bg-gray-800">
+                  {{-- Skeleton inicial; substituído pelo HTML da parcial --}}
+                  <div id="items-container-{{ $p->id }}" class="space-y-2">
+                    <div class="h-4 rounded bg-gray-200 dark:bg-gray-700 animate-pulse w-40"></div>
+                    <div class="h-28 rounded bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          @endforeach
+        </tbody>
+      </table>
     </div>
 
-    <div class="mt-4">
-        {{ $inventories->links() }}
+    <div class="mt-6 flex justify-end">
+      {{ $inventories->links() }}
     </div>
-
-    {{-- Modal de Saída --}}
-    <div
-        x-show="showExit"
-        x-cloak
-        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50"
-    >
-        <div class="bg-white dark:bg-gray-800 rounded-lg overflow-hidden w-full max-w-md">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Registrar Saída</h3>
-            </div>
-            <form action="{{ route('movements.exit') }}" method="POST" class="p-4 space-y-4">
-                @csrf
-                <input type="hidden" name="product_id" :value="exit.product_id" />
-
-                {{-- Quantidade --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Quantidade</label>
-                    <input
-                        type="number"
-                        name="quantity"
-                        x-model.number="exit.quantity"
-                        min="1"
-                        class="mt-1 block w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-                    />
-                    @error('quantity') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
-                </div>
-
-                {{-- Responsável --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Responsável</label>
-                    <select
-                        name="responsible_id"
-                        x-model="exit.responsible_id"
-                        class="mt-1 block w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-                    >
-                        <option value="">-- selecione --</option>
-                        @foreach(\App\Models\User::orderBy('name')->get() as $user)
-                            <option value="{{ $user->id }}">{{ $user->name }}</option>
-                        @endforeach
-                    </select>
-                    @error('responsible_id') <p class="text-red-600 text-sm">{{ $message }}</p> @enderror
-                </div>
-
-                {{-- Observações --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Observações</label>
-                    <textarea
-                        name="notes"
-                        x-model="exit.notes"
-                        class="mt-1 block w-full rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
-                    ></textarea>
-                </div>
-
-                {{-- Ações --}}
-                <div class="flex justify-end gap-2">
-                    <button
-                        type="button"
-                        @click="closeExit()"
-                        class="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="submit"
-                        class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                    >
-                        Confirmar Saída
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
+  @else
+    <div class="py-12 text-center text-gray-400 dark:text-gray-500">Nenhum registro de estoque.</div>
+  @endif
 </div>
+
+{{-- Script inline para não depender de @stack("scripts") --}}
+<script>
+(function(){
+  const loaded = new Set();
+
+  function rotateChevron(btn, open){
+    btn.dataset.open = open ? '1' : '0';
+    const svg = btn.querySelector('svg');
+    if(svg){
+      svg.style.transform = open ? 'rotate(90deg)' : 'rotate(0deg)';
+    }
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  function loadItems(productId){
+    const url = "{{ route('inventory.items.partial', ':id') }}".replace(':id', productId);
+    const target = document.getElementById('items-container-'+productId);
+    if(!target) return;
+
+    // mantém skeleton se for a primeira carga
+    fetch(url, { headers: { 'X-Requested-With':'XMLHttpRequest' }})
+      .then(r => r.text())
+      .then(html => target.innerHTML = html)
+      .catch(() => target.innerHTML = '<div class="text-sm text-rose-600 dark:text-rose-300">Falha ao carregar itens.</div>');
+  }
+
+  function toggleRow(btn){
+    const id  = btn.dataset.productId;
+    const row = document.getElementById('row-items-'+id);
+    if(!row) return;
+
+    const willOpen = row.classList.contains('hidden');
+    row.classList.toggle('hidden');
+    rotateChevron(btn, willOpen);
+
+    if(willOpen && !loaded.has(id)){
+      loaded.add(id);
+      loadItems(id);
+    }
+  }
+
+  // Clique + teclado (Acessibilidade)
+  document.querySelectorAll('.toggle-row').forEach(btn => {
+    btn.addEventListener('click', () => toggleRow(btn));
+    btn.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        toggleRow(btn);
+      }
+    });
+  });
+})();
+</script>
 @endsection

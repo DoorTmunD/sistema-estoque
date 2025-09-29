@@ -17,6 +17,7 @@
         "vite": "^6.2.4"
     },
     "dependencies": {
+        "alpinejs": "^3.14.9",
         "chart.js": "^4.4.9",
         "cleave.js": "^1.6.0",
         "imask": "^7.6.1",

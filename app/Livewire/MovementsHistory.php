@@ -7,50 +7,57 @@ use Livewire\WithPagination;
 use App\Models\InventoryMovement;
 use App\Models\Category;
 use App\Models\Supplier;
-use Carbon\Carbon;
 
 class MovementsHistory extends Component
 {
     use WithPagination;
 
-    // filtros
-    public $search         = '';
-    public $filterCategory = '';
-    public $filterSupplier = '';
-    public $dateStart      = null;
-    public $dateEnd        = null;
+    // Filtros
+    public string $search = '';
+    public string $filterCategory = '';
+    public string $filterSupplier = '';
+    public ?string $dateStart = null;
+    public ?string $dateEnd   = null;
 
-    // ordenação
-    public $sortField     = 'created_at';
-    public $sortDirection = 'desc';
+    // Ordenação
+    public string $sortField = 'created_at';
+    public string $sortDirection = 'desc';
 
-    // listas para dropdowns
+    // Listas para os dropdowns
     public $categories;
     public $suppliers;
 
     protected $paginationTheme = 'tailwind';
 
-    public function mount()
+    // Mantém os filtros/ordenação na URL
+    protected $queryString = [
+        'search'         => ['except' => ''],
+        'filterCategory' => ['except' => ''],
+        'filterSupplier' => ['except' => ''],
+        'dateStart'      => ['except' => null],
+        'dateEnd'        => ['except' => null],
+        'sortField'      => ['except' => 'created_at'],
+        'sortDirection'  => ['except' => 'desc'],
+    ];
+
+    public function mount(): void
     {
         $this->categories = Category::orderBy('name')->get();
         $this->suppliers  = Supplier::orderBy('name')->get();
     }
 
-    // Sempre que um filtro ou ordenação mudar, volta para a página 1
-    public function updating($field)
+    // Volta para a página 1 quando filtros/ordenação mudarem
+    public function updating($field): void
     {
         if (in_array($field, [
             'search','filterCategory','filterSupplier','dateStart','dateEnd',
             'sortField','sortDirection'
-        ])) {
+        ], true)) {
             $this->resetPage();
         }
     }
 
-    /**
-     * Alterna asc/desc ao clicar no cabeçalho, ou muda campo de ordenação.
-     */
-    public function sortBy(string $field)
+    public function sortBy(string $field): void
     {
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
@@ -62,43 +69,51 @@ class MovementsHistory extends Component
 
     public function render()
     {
-        $query = InventoryMovement::with(['product.category','product.supplier','user']);
-
-        if ($this->search) {
-            $query->whereHas('product', fn($q) =>
-                $q->where('name', 'like', "%{$this->search}%")
+        // ⚠️ Removido 'files' do eager load
+        $query = InventoryMovement::query()
+            ->with([
+                // selects mínimos para reduzir payload
+                'product:id,name,category_id,supplier_id',
+                'product.category:id,name',
+                'product.supplier:id,name',
+                'item:id,product_id,serial_internal',
+                // alias 'user' aponta para performed_by (definido no model)
+                'user:id,name',
+                'collaborator:id,name',
+            ])
+            ->when($this->search !== '', function ($q) {
+                $s = '%'.trim($this->search).'%';
+                $q->where(function ($qq) use ($s) {
+                    $qq->where('notes', 'like', $s)
+                       ->orWhereHas('product', fn($p) => $p->where('name', 'like', $s))
+                       ->orWhereHas('user', fn($u) => $u->where('name', 'like', $s))
+                       ->orWhereHas('collaborator', fn($u) => $u->where('name', 'like', $s));
+                });
+            })
+            ->when($this->filterCategory !== '', fn($q) =>
+                $q->whereHas('product.category', fn($c) => $c->where('id', $this->filterCategory))
+            )
+            ->when($this->filterSupplier !== '', fn($q) =>
+                $q->whereHas('product.supplier', fn($s) => $s->where('id', $this->filterSupplier))
+            )
+            ->when($this->dateStart, fn($q) =>
+                $q->whereDate('created_at', '>=', $this->dateStart)
+            )
+            ->when($this->dateEnd, fn($q) =>
+                $q->whereDate('created_at', '<=', $this->dateEnd)
             );
-        }
 
-        if ($this->filterCategory) {
-            $query->whereHas('product', fn($q) =>
-                $q->where('category_id', $this->filterCategory)
-            );
-        }
+        // Whitelist de campos ordenáveis para evitar SQL injection
+        $allowedSorts = ['created_at', 'qty', 'before_stock', 'after_stock', 'unit_cost', 'total_cost'];
+        $field = in_array($this->sortField, $allowedSorts, true) ? $this->sortField : 'created_at';
+        $dir   = $this->sortDirection === 'asc' ? 'asc' : 'desc';
 
-        if ($this->filterSupplier) {
-            $query->whereHas('product', fn($q) =>
-                $q->where('supplier_id', $this->filterSupplier)
-            );
-        }
-
-        if ($this->dateStart) {
-            $start = Carbon::parse($this->dateStart)->startOfDay();
-            $query->where('created_at', '>=', $start);
-        }
-
-        if ($this->dateEnd) {
-            $end = Carbon::parse($this->dateEnd)->endOfDay();
-            $query->where('created_at', '<=', $end);
-        }
-
-        // aplica ordenação dinâmica
-        $movements = $query
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate(10);
+        $movements = $query->orderBy($field, $dir)->paginate(15);
 
         return view('livewire.movements-history', [
-            'movements' => $movements,
+            'movements'  => $movements,
+            'categories' => $this->categories,
+            'suppliers'  => $this->suppliers,
         ]);
     }
 }

@@ -12,5 +12,6 @@ export default defineConfig({
     build: {
         outDir: 'public/build',     // destino dos arquivos compilados
         manifest: true,             // gera manifest.json
+        manifestDir: '.',
     },
 });

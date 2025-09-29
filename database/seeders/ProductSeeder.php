@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use App\Models\Product;
 use App\Models\InventoryMovement;
 use App\Models\Inventory;
+use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 
 class ProductSeeder extends Seeder

@@ -6,32 +6,25 @@ databases:
 
 services:
   - type: web
-    name: controle-estoque
+    name: controle-estoque-web   # <- novo nome p/ não conflitar
     env: docker
     plan: free
     dockerfilePath: ./Dockerfile
     autoDeploy: true
-
     envVars:
-      # Ambiente Laravel
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: "false"
       - key: LOG_LEVEL
         value: warning
-
-      # Sessão e filas
       - key: SESSION_DRIVER
         value: database
       - key: QUEUE_CONNECTION
         value: database
-
-      # Flag que sinaliza Render
       - key: RENDER
         value: "true"
 
-      # Banco de dados (Render injeta as credenciais)
       - key: DB_CONNECTION
         value: pgsql
       - key: DATABASE_URL

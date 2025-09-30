@@ -4,18 +4,15 @@
 FROM node:20-alpine AS assets
 WORKDIR /app
 
-# Instala deps do frontend
+# deps frontend
 COPY package.json package-lock.json ./
 RUN npm ci --no-progress
 
-# Vite/Tailwind configs + fontes do front
+# Vite config e fontes do front
 COPY vite.config.js ./
-COPY tailwind.config.js postcss.config.js ./
 COPY resources ./resources
 
-# 🔨 Builda para public/build com manifest na raiz (public/build/manifest.json)
-# (garanta que seu vite.config.js está com:
-#  build.outDir='public/build', build.manifest=true, build.manifestDir='.')
+# Builda para public/build COM manifest na raiz (public/build/manifest.json)
 RUN npm run build
 
 
@@ -34,7 +31,7 @@ RUN composer install --no-dev --no-interaction --no-progress \
 #######################################################################
 FROM webdevops/php-nginx:8.2-alpine
 
-# 🔧 Extensões necessárias para Postgres no Alpine
+# Extensões p/ Postgres no Alpine
 RUN apk add --no-cache postgresql-dev $PHPIZE_DEPS \
  && docker-php-ext-install pdo pdo_pgsql \
  && apk del $PHPIZE_DEPS
@@ -45,17 +42,17 @@ ENV WEB_DOCUMENT_ROOT=/app/public \
 
 WORKDIR /app
 
-# Código + vendors + assets prontos
+# Código + vendors + assets
 COPY . .
 COPY --from=vendor /app/vendor ./vendor
 COPY --from=assets /app/public/build ./public/build
 
-# Permissões para cache/logs/sessions
+# Permissões
 RUN mkdir -p storage/framework/{cache,data,sessions,views} storage/logs bootstrap/cache \
  && chown -R application:application storage bootstrap/cache public/build \
  && chmod -R ug+rwX storage bootstrap/cache
 
-# Entrypoint Laravel (gera APP_KEY, migra e seed, ajusta APP_URL/ASSET_URL)
+# Entrypoint (key, migrate/seed, APP_URL/ASSET_URL)
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

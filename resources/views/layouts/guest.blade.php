@@ -12,10 +12,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet"/>
 
-    @vite(
-  ['resources/css/app.css', 'resources/js/app.js'],
-  file_exists(public_path('build/manifest.json')) ? 'build' : 'build/.vite'
-)
+@vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
       [x-cloak]{display:none!important}
@@ -52,11 +49,11 @@
 
     <!-- Coluna Direita (Card) -->
     <div class="w-full lg:w-1/2 flex items-center justify-center min-h-screen relative bg-white/80 dark:bg-[#232046]/60 transition-all duration-500 z-20">
-        <div x-data x-cloak
-             :class="error ? 'animate-shake ring-2 ring-red-400 shadow-red-200' : ''"
-             class="relative w-full max-w-md mx-auto bg-white/95 dark:bg-gray-900/90 rounded-2xl shadow-2xl backdrop-blur-xl border border-indigo-100/60 dark:border-[#6648e033] px-10 py-10 flex flex-col items-center space-y-6">
-            {{ $slot }}
-        </div>
+<div x-data="{ error: false }"
+      :class="error ? 'animate-shake ring-2 ring-red-400 shadow-red-200' : ''"
+      class="relative w-full max-w-md mx-auto bg-white/95 dark:bg-gray-900/90 rounded-2xl shadow-2xl backdrop-blur-xl border border-indigo-100/60 dark:border-[#6648e033] px-10 py-10 flex flex-col items-center space-y-6">
+    {{ $slot }}
+</div>
     </div>
 </div>
 

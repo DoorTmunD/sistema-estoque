@@ -17,10 +17,7 @@
     <!-- Flowbite CSS (utilizado em alguns componentes) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/2.3.0/flowbite.min.css"/>
 
-    @vite(
-  ['resources/css/app.css', 'resources/js/app.js'],
-  file_exists(public_path('build/manifest.json')) ? 'build' : 'build/.vite'
-)
+@vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 
     <!-- Libs pesadas com defer (não bloqueiam a navegação) -->

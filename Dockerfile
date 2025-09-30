@@ -4,15 +4,13 @@
 FROM node:20-alpine AS assets
 WORKDIR /app
 
-# deps frontend
 COPY package.json package-lock.json ./
 RUN npm ci --no-progress
 
-# Vite config e fontes do front
 COPY vite.config.js ./
+# (removidas as cópias opcionais)
 COPY resources ./resources
 
-# Builda para public/build COM manifest na raiz (public/build/manifest.json)
 RUN npm run build
 
 
@@ -42,17 +40,25 @@ ENV WEB_DOCUMENT_ROOT=/app/public \
 
 WORKDIR /app
 
-# Código + vendors + assets
+# Código + vendors
 COPY . .
 COPY --from=vendor /app/vendor ./vendor
+
+# ===== Assets do Vite =====
+# Caminho "correto" (public/build gerado pelo vite.config.js)
 COPY --from=assets /app/public/build ./public/build
+# Fallback: se por qualquer motivo o outDir cair em "dist", copia também
+COPY --from=assets /app/dist ./public/build
+
+# Remove "hot" para não tentar HMR em produção
+RUN rm -f public/hot || true
 
 # Permissões
 RUN mkdir -p storage/framework/{cache,data,sessions,views} storage/logs bootstrap/cache \
  && chown -R application:application storage bootstrap/cache public/build \
  && chmod -R ug+rwX storage bootstrap/cache
 
-# Entrypoint (key, migrate/seed, APP_URL/ASSET_URL)
+# Entrypoint (key, migrate/seed, APP_URL/ASSET_URL, caches)
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

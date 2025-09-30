@@ -7,8 +7,13 @@ export default defineConfig({
     laravel({
       input: ['resources/css/app.css', 'resources/js/app.js'],
       refresh: true,
-      // 🚀 chave da solução: gera manifest em public/build/manifest.json
-      buildDirectory: 'build',
+      buildDirectory: 'build', // gera manifest em public/build/manifest.json
     }),
   ],
+  // 🔥 Garantia: arquivos de saída vão para public/build (não 'dist')
+  build: {
+    outDir: 'public/build',
+    manifest: true,
+    emptyOutDir: true,
+  },
 })
